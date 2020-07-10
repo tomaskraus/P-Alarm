@@ -99,6 +99,11 @@ namespace P_Alarm
             Trace.WriteLine("action stop");
         }
 
+        private void doBeep()
+        {
+            Console.Beep(1720, 200);
+        }
+
         public void Action(object sender, EventArgs e)
         {
             if (state == INIT)
@@ -112,6 +117,7 @@ namespace P_Alarm
                 string info = Regex.Replace(settings.ALARM_TEXT_COUNTDOWN, "\\$", cntdCounter.ToString());
                 updateTextHandler(info);
 
+                doBeep();
                 Trace.WriteLine("alarmAction COUNTDOWN=" + info);
 
                 cntdCounter--;
