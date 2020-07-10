@@ -1,4 +1,6 @@
-﻿using System;
+﻿using IniParser;
+using IniParser.Model;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -16,6 +18,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using System.Windows.Threading;
+
 
 namespace P_Alarm
 {
@@ -37,7 +40,8 @@ namespace P_Alarm
         public const int BEEP_PITCH = 1720;
         public const int BEEP_DURATION_MS = 200;
         public const int BEEP_DURATION_LONG_MS = 1250;
-
+        
+        //-----------------------------------
 
         public int ALARM_PERIOD_SECS;
         public int CALL_ACTION_DELAY_SECS;
@@ -50,6 +54,7 @@ namespace P_Alarm
         public string ALARM_ACTION_EXE;
         public string ALARM_ACTION_PARAMS;
 
+        private IniData data;
 
         private static Settings instance = null;
 
@@ -64,14 +69,20 @@ namespace P_Alarm
 
         private Settings()
         {
-            ALARM_PERIOD_SECS = 10;
-            CALL_ACTION_DELAY_SECS = 4;
-            BEEP_COUNTDOWN_SECS = 2;
-            ALARM_TEXT_DEFAULT = "Alarm pro volání sestry";
-            ALARM_TEXT_COUNTDOWN = "Začnu volat sestru za: $ sekund.";
-            ALARM_TEXT_CALL = "Volám sestru...";
-            ALARM_ACTION_EXE = "nonsenseApp";
-            ALARM_ACTION_PARAMS = " -p";
+            var Parser = new FileIniDataParser();
+            data = Parser.ReadFile("config.ini", Encoding.UTF8);
+
+
+            ALARM_PERIOD_SECS = int.Parse(data["DURATIONS"]["ALARM_PERIOD_SECS"]);
+            CALL_ACTION_DELAY_SECS = int.Parse(data["DURATIONS"]["CALL_ACTION_DELAY_SECS"]);
+            BEEP_COUNTDOWN_SECS = int.Parse(data["DURATIONS"]["BEEP_COUNTDOWN_SECS"]);
+
+            ALARM_TEXT_DEFAULT = data["TEXTS"]["ALARM_TEXT_DEFAULT"];
+            ALARM_TEXT_COUNTDOWN = data["TEXTS"]["ALARM_TEXT_COUNTDOWN"];
+            ALARM_TEXT_CALL = data["TEXTS"]["ALARM_TEXT_CALL"];
+
+            ALARM_ACTION_EXE = data["ACTION"]["ALARM_ACTION_EXE"];
+            ALARM_ACTION_PARAMS = data["ACTION"]["ALARM_ACTION_PARAMS"];
         }
     }
 
@@ -88,12 +99,12 @@ namespace P_Alarm
         private DispatcherTimer timer;
         private int cntdCounter;
         private int state;
-        private Action<string> updateTextHandler;
+        private readonly Action<string> UpdateTextHandler;
 
         public AlarmAction(Settings settings, Action<string> updateTextHandler)
         {
             this.settings = settings;
-            this.updateTextHandler = updateTextHandler;
+            this.UpdateTextHandler = updateTextHandler;
             timer = Utils.CreateTimer(1, Action);
             Trace.WriteLine("alarmAction create");
         }
@@ -124,7 +135,8 @@ namespace P_Alarm
         private void callScript()
         {
             doBeepLong();
-            Trace.WriteLine("callScript cmd = " + settings.ALARM_ACTION_EXE);
+            Trace.WriteLine("callScript cmd = " + settings.ALARM_ACTION_EXE + " "
+                + settings.ALARM_ACTION_PARAMS);
 
             try
             {
@@ -155,7 +167,7 @@ namespace P_Alarm
             else if (state == COUNTDOWN || state == COUNTDOWN_BEEP)
             {
                 string info = Regex.Replace(settings.ALARM_TEXT_COUNTDOWN, "\\$", cntdCounter.ToString());
-                updateTextHandler(info);
+                UpdateTextHandler(info);
                 Trace.WriteLine("alarmAction COUNTDOWN=" + info);
                 cntdCounter--;
                 if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
@@ -170,7 +182,7 @@ namespace P_Alarm
             else if (state == ACTION)
             {
                 Trace.WriteLine("alarmAction");
-                updateTextHandler(settings.ALARM_TEXT_CALL);
+                UpdateTextHandler(settings.ALARM_TEXT_CALL);
                 callScript();
                 state = END;
             }
@@ -204,12 +216,21 @@ namespace P_Alarm
         {
             InitializeComponent();
 
-            AlarmTimer = Utils.CreateTimer(Settings.Instance().ALARM_PERIOD_SECS, DoAlarmShow);
-            AlarmTimer.Start();
+            try
+            {
+                AlarmTimer = Utils.CreateTimer(Settings.Instance().ALARM_PERIOD_SECS, DoAlarmShow);
+                AlarmTimer.Start();
 
-            alarmAction = new AlarmAction(Settings.Instance(), UpdateInfoLabel);
+                alarmAction = new AlarmAction(Settings.Instance(), UpdateInfoLabel);
 
-            ShowWindow();
+                ShowWindow();
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message,
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                Application.Current.Shutdown();
+            }
         }
 
         public static void ResetTimer(DispatcherTimer timer)
