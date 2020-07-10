@@ -55,16 +55,22 @@ namespace P_Alarm
         {
             InitializeComponent();
 
-            PrepareAlarmTimer(Settings.Instance().ALARM_PERIOD_SECS).Start();
+            CreateTimer(Settings.Instance().ALARM_PERIOD_SECS, Timer_Tick).Start();
         }
 
-        private DispatcherTimer PrepareAlarmTimer(int seconds)
+        private DispatcherTimer CreateTimer(int seconds, System.EventHandler handler)
         {
             DispatcherTimer timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromSeconds(seconds);
-            timer.Tick += Timer_Tick;
+            timer.Tick += handler;
             
             return timer;
+        }
+
+        public static void ResetTimer(DispatcherTimer timer)
+        {
+            timer.Stop();
+            timer.Start();
         }
 
         private void StopBtn_Click(object sender, RoutedEventArgs e)
