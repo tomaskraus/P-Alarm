@@ -70,10 +70,10 @@ namespace P_Alarm
             ALARM_TEXT_DEFAULT = "Alarm pro volání sestry";
             ALARM_TEXT_COUNTDOWN = "Začnu volat sestru za: $ sekund.";
             ALARM_TEXT_CALL = "Volám sestru...";
-            ALARM_ACTION_EXE = "git";
-            ALARM_ACTION_PARAMS = " -version";
+            ALARM_ACTION_EXE = "nonsenseApp";
+            ALARM_ACTION_PARAMS = " -p";
+        }
     }
-}
 
     public class AlarmAction
     {
@@ -107,7 +107,7 @@ namespace P_Alarm
 
         public void Stop()
         {
-            state = STOPPED;           
+            state = STOPPED;
             Trace.WriteLine("action stop");
         }
 
@@ -125,6 +125,22 @@ namespace P_Alarm
         {
             doBeepLong();
             Trace.WriteLine("callScript cmd = " + settings.ALARM_ACTION_EXE);
+
+            try
+            {
+
+                var proc = System.Diagnostics.Process.Start(Settings.Instance().ALARM_ACTION_EXE, Settings.Instance().ALARM_ACTION_PARAMS);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message 
+                    + ":\n" + 
+                    Settings.Instance().ALARM_ACTION_EXE + Settings.Instance().ALARM_ACTION_PARAMS, 
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                Application.Current.Shutdown();
+            }
+
+            Trace.WriteLine("callScript END");
         }
 
 
@@ -140,10 +156,7 @@ namespace P_Alarm
             {
                 string info = Regex.Replace(settings.ALARM_TEXT_COUNTDOWN, "\\$", cntdCounter.ToString());
                 updateTextHandler(info);
-
-
                 Trace.WriteLine("alarmAction COUNTDOWN=" + info);
-
                 cntdCounter--;
                 if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
                 {
@@ -168,14 +181,14 @@ namespace P_Alarm
             }
             else if (state == STOPPED)
             {
-                timer.Stop();             
+                timer.Stop();
                 Trace.WriteLine("alarmAction STOPPED");
             }
             else
             {
                 throw new Exception("illegal AlarmAction state: " + state);
             }
-           
+
         }
     }
 
@@ -219,7 +232,7 @@ namespace P_Alarm
         }
 
         void ShowWindow()
-        { 
+        {
             InfoLbl.Content = Settings.Instance().ALARM_TEXT_DEFAULT;
             alarmAction.Start();
             this.Show();
