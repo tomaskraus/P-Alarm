@@ -36,6 +36,7 @@ namespace P_Alarm
     {
         public int ALARM_PERIOD_SECS;
         public int CALL_ACTION_DELAY_SECS;
+        public string ALARM_TEXT_DEFAULT;
         public string ALARM_TEXT_COUNTDOWN;
         public string ALARM_TEXT_CALL;
         public string ALARM_ACTION;
@@ -56,6 +57,7 @@ namespace P_Alarm
         {
             ALARM_PERIOD_SECS = 10;
             CALL_ACTION_DELAY_SECS = 3;
+            ALARM_TEXT_DEFAULT = "Alarm pro volání sestry";
             ALARM_TEXT_COUNTDOWN = "Začnu volat sestru za: $ sekund.";
             ALARM_TEXT_CALL = "Volám sestru...";
             ALARM_ACTION = "git -version";
@@ -101,7 +103,6 @@ namespace P_Alarm
         {
             if (state == INIT)
             {
-                updateTextHandler("");
                 Trace.WriteLine("alarmAction INIT");
                 cntdCounter = settings.CALL_ACTION_DELAY_SECS;
                 state = COUNTDOWN;
@@ -159,6 +160,8 @@ namespace P_Alarm
             AlarmTimer.Start();
 
             alarmAction = new AlarmAction(Settings.Instance(), UpdateInfoLabel);
+
+            ShowWindow();
         }
 
         public static void ResetTimer(DispatcherTimer timer)
@@ -177,10 +180,14 @@ namespace P_Alarm
 
         void DoAlarmShow(object sender, EventArgs e)
         {
-            InfoLbl.Content = "";
+            ShowWindow();
+        }
+
+        void ShowWindow()
+        { 
+            InfoLbl.Content = Settings.Instance().ALARM_TEXT_DEFAULT;
             alarmAction.Start();
             this.Show();
-            
         }
 
         void UpdateInfoLabel(string caption)
