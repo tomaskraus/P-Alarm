@@ -138,10 +138,19 @@ namespace P_Alarm
             Trace.WriteLine("callScript cmd = " + settings.ALARM_ACTION_EXE + " "
                 + settings.ALARM_ACTION_PARAMS);
 
+            int exitCode = 0;
             try
             {
-
-                var proc = System.Diagnostics.Process.Start(Settings.Instance().ALARM_ACTION_EXE, Settings.Instance().ALARM_ACTION_PARAMS);
+                ProcessStartInfo startInfo = new ProcessStartInfo(
+                    Settings.Instance().ALARM_ACTION_EXE, Settings.Instance().ALARM_ACTION_PARAMS
+                    );
+                var proc = System.Diagnostics.Process.Start(startInfo);
+                //TODO improve task end handling
+                //exitCode = proc.ExitCode;
+                //if (exitCode != 0)
+                //{
+                //    throw new Exception("program exit with code: " + exitCode);
+                //}
             }
             catch (Exception e)
             {
