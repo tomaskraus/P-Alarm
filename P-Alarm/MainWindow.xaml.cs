@@ -34,12 +34,21 @@ namespace P_Alarm
 
     public class Settings
     {
+        public const int BEEP_PITCH = 1720;
+        public const int BEEP_DURATION_MS = 200;
+        public const int BEEP_DURATION_LONG_MS = 1250;
+
+
         public int ALARM_PERIOD_SECS;
         public int CALL_ACTION_DELAY_SECS;
+
+        //how many seconds to beep before application calls an action
+        public int BEEP_COUNTDOWN_SECS;
         public string ALARM_TEXT_DEFAULT;
         public string ALARM_TEXT_COUNTDOWN;
         public string ALARM_TEXT_CALL;
-        public string ALARM_ACTION;
+        public string ALARM_ACTION_EXE;
+        public string ALARM_ACTION_PARAMS;
 
 
         private static Settings instance = null;
@@ -56,11 +65,13 @@ namespace P_Alarm
         private Settings()
         {
             ALARM_PERIOD_SECS = 10;
-            CALL_ACTION_DELAY_SECS = 3;
+            CALL_ACTION_DELAY_SECS = 4;
+            BEEP_COUNTDOWN_SECS = 2;
             ALARM_TEXT_DEFAULT = "Alarm pro volání sestry";
             ALARM_TEXT_COUNTDOWN = "Začnu volat sestru za: $ sekund.";
             ALARM_TEXT_CALL = "Volám sestru...";
-            ALARM_ACTION = "git -version";
+            ALARM_ACTION_EXE = "git";
+            ALARM_ACTION_PARAMS = " -version";
     }
 }
 
@@ -68,9 +79,10 @@ namespace P_Alarm
     {
         const int INIT = 0;
         const int COUNTDOWN = 1;
-        const int ACTION = 2;
-        const int END = 3;
-        const int STOPPED = 4;
+        const int COUNTDOWN_BEEP = 2;
+        const int ACTION = 3;
+        const int END = 4;
+        const int STOPPED = 5;
 
         private Settings settings;
         private DispatcherTimer timer;
@@ -101,8 +113,20 @@ namespace P_Alarm
 
         private void doBeep()
         {
-            Console.Beep(1720, 200);
+            Console.Beep(Settings.BEEP_PITCH, Settings.BEEP_DURATION_MS);
         }
+
+        private void doBeepLong()
+        {
+            Console.Beep(Settings.BEEP_PITCH, Settings.BEEP_DURATION_LONG_MS);
+        }
+
+        private void callScript()
+        {
+            doBeepLong();
+            Trace.WriteLine("callScript cmd = " + settings.ALARM_ACTION_EXE);
+        }
+
 
         public void Action(object sender, EventArgs e)
         {
@@ -112,15 +136,19 @@ namespace P_Alarm
                 cntdCounter = settings.CALL_ACTION_DELAY_SECS;
                 state = COUNTDOWN;
             }
-            else if (state == COUNTDOWN)
+            else if (state == COUNTDOWN || state == COUNTDOWN_BEEP)
             {
                 string info = Regex.Replace(settings.ALARM_TEXT_COUNTDOWN, "\\$", cntdCounter.ToString());
                 updateTextHandler(info);
 
-                doBeep();
+
                 Trace.WriteLine("alarmAction COUNTDOWN=" + info);
 
                 cntdCounter--;
+                if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
+                {
+                    doBeep();
+                }
                 if (cntdCounter <= 0)
                 {
                     state = ACTION;
@@ -128,8 +156,9 @@ namespace P_Alarm
             }
             else if (state == ACTION)
             {
-                Trace.WriteLine("alarmAction ACTION=" + settings.ALARM_ACTION);
+                Trace.WriteLine("alarmAction");
                 updateTextHandler(settings.ALARM_TEXT_CALL);
+                callScript();
                 state = END;
             }
             else if (state == END)
