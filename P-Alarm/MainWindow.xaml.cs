@@ -76,33 +76,33 @@ namespace P_Alarm
         {
             this.settings = settings;
             timer = Utils.CreateTimer(1, Action);
-            Trace.WriteLine("action create");
+            Trace.WriteLine("alarmAction create");
         }
 
         public void Start()
         {
             state = INIT;
             timer.Start();
-            Trace.WriteLine("AlarmAction start");
+            Trace.WriteLine("action start");
         }
 
         public void Stop()
         {
             state = STOPPED;           
-            Trace.WriteLine("AlarmAction stop");
+            Trace.WriteLine("action stop");
         }
 
         public void Action(object sender, EventArgs e)
         {
             if (state == INIT)
             {
-                Trace.WriteLine("action init");
+                Trace.WriteLine("alarmAction INIT");
                 cntdCounter = settings.CALL_ACTION_DELAY_SECS;
                 state = COUNTDOWN;
             }
             else if (state == COUNTDOWN)
             {
-                Trace.WriteLine("action countdown=" + cntdCounter);
+                Trace.WriteLine("alarmAction COUNTDOWN=" + cntdCounter);
                 cntdCounter--;
                 if (cntdCounter <= 0)
                 {
@@ -111,18 +111,18 @@ namespace P_Alarm
             }
             else if (state == ACTION)
             {
-                Trace.WriteLine("action action=" + settings.ALARM_ACTION);
+                Trace.WriteLine("alarmAction ACTION=" + settings.ALARM_ACTION);
                 state = END;
             }
             else if (state == END)
             {
                 timer.Stop();
-                Trace.WriteLine("action end");
+                Trace.WriteLine("alarmAction END");
             }
             else if (state == STOPPED)
             {
                 timer.Stop();             
-                Trace.WriteLine("STOPPED");
+                Trace.WriteLine("alarmAction STOPPED");
             }
             else
             {
