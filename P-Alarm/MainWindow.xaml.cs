@@ -73,7 +73,7 @@ namespace P_Alarm
             data = Parser.ReadFile("config.ini", Encoding.UTF8);
 
 
-            ALARM_PERIOD_SECS = int.Parse(data["DURATIONS"]["ALARM_PERIOD_SECS"]);
+            ALARM_PERIOD_SECS = 60 * int.Parse(data["DURATIONS"]["ALARM_PERIOD_MINS"]);
             CALL_ACTION_DELAY_SECS = int.Parse(data["DURATIONS"]["CALL_ACTION_DELAY_SECS"]);
             BEEP_COUNTDOWN_SECS = int.Parse(data["DURATIONS"]["BEEP_COUNTDOWN_SECS"]);
 
