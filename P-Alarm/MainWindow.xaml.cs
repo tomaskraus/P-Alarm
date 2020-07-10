@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -35,7 +36,8 @@ namespace P_Alarm
     {
         public int ALARM_PERIOD_SECS;
         public int CALL_ACTION_DELAY_SECS;
-        public string ALARM_TEXT_DELAY;
+        public string ALARM_TEXT_COUNTDOWN;
+        public string ALARM_TEXT_CALL;
         public string ALARM_ACTION;
 
 
@@ -54,7 +56,8 @@ namespace P_Alarm
         {
             ALARM_PERIOD_SECS = 10;
             CALL_ACTION_DELAY_SECS = 3;
-            ALARM_TEXT_DELAY = "Začnu volat sestru za: {} sekund.";
+            ALARM_TEXT_COUNTDOWN = "Začnu volat sestru za: $ sekund.";
+            ALARM_TEXT_CALL = "Volám sestru...";
             ALARM_ACTION = "git -version";
     }
 }
@@ -71,10 +74,12 @@ namespace P_Alarm
         private DispatcherTimer timer;
         private int cntdCounter;
         private int state;
+        private Action<string> updateTextHandler;
 
-        public AlarmAction(Settings settings)
+        public AlarmAction(Settings settings, Action<string> updateTextHandler)
         {
             this.settings = settings;
+            this.updateTextHandler = updateTextHandler;
             timer = Utils.CreateTimer(1, Action);
             Trace.WriteLine("alarmAction create");
         }
@@ -96,13 +101,18 @@ namespace P_Alarm
         {
             if (state == INIT)
             {
+                updateTextHandler("");
                 Trace.WriteLine("alarmAction INIT");
                 cntdCounter = settings.CALL_ACTION_DELAY_SECS;
                 state = COUNTDOWN;
             }
             else if (state == COUNTDOWN)
             {
-                Trace.WriteLine("alarmAction COUNTDOWN=" + cntdCounter);
+                string info = Regex.Replace(settings.ALARM_TEXT_COUNTDOWN, "\\$", cntdCounter.ToString());
+                updateTextHandler(info);
+
+                Trace.WriteLine("alarmAction COUNTDOWN=" + info);
+
                 cntdCounter--;
                 if (cntdCounter <= 0)
                 {
@@ -112,6 +122,7 @@ namespace P_Alarm
             else if (state == ACTION)
             {
                 Trace.WriteLine("alarmAction ACTION=" + settings.ALARM_ACTION);
+                updateTextHandler(settings.ALARM_TEXT_CALL);
                 state = END;
             }
             else if (state == END)
@@ -147,10 +158,8 @@ namespace P_Alarm
             AlarmTimer = Utils.CreateTimer(Settings.Instance().ALARM_PERIOD_SECS, DoAlarmShow);
             AlarmTimer.Start();
 
-            alarmAction = new AlarmAction(Settings.Instance());
+            alarmAction = new AlarmAction(Settings.Instance(), UpdateInfoLabel);
         }
-
-        
 
         public static void ResetTimer(DispatcherTimer timer)
         {
@@ -168,11 +177,15 @@ namespace P_Alarm
 
         void DoAlarmShow(object sender, EventArgs e)
         {
-            InfoLbl.Content = DateTime.Now.ToLongTimeString();
+            InfoLbl.Content = "";
             alarmAction.Start();
             this.Show();
             
         }
 
+        void UpdateInfoLabel(string caption)
+        {
+            InfoLbl.Content = caption;
+        }
     }
 }
