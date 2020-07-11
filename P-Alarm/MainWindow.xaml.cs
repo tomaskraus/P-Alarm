@@ -96,6 +96,7 @@ namespace P_Alarm
         const int STOPPED = 5;
 
         private Settings settings;
+        private bool firstTime;
         private DispatcherTimer timer;
         private int cntdCounter;
         private int state;
@@ -105,12 +106,19 @@ namespace P_Alarm
         {
             this.settings = settings;
             this.UpdateTextHandler = updateTextHandler;
+            firstTime = true;
             timer = Utils.CreateTimer(1, Action);
             Trace.WriteLine("alarmAction create");
         }
 
         public void Start()
         {
+            if (firstTime == true)
+            {
+                firstTime = false;
+                Trace.WriteLine("alarmAction first time - return");
+                return;
+            }
             state = INIT;
             timer.Start();
             Trace.WriteLine("action start");
