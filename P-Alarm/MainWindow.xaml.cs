@@ -40,11 +40,12 @@ namespace P_Alarm
         public const int BEEP_PITCH = 1720;
         public const int BEEP_DURATION_MS = 200;
         public const int BEEP_DURATION_LONG_MS = 1250;
-        
+
         //-----------------------------------
 
         public int ALARM_PERIOD_SECS;
         public int CALL_ACTION_DELAY_SECS;
+        public int CALL_2ND_SECS;
 
         //how many seconds to beep before application calls an action
         public int BEEP_COUNTDOWN_SECS;
@@ -76,13 +77,14 @@ namespace P_Alarm
             ALARM_PERIOD_SECS = 60 * int.Parse(data["DURATIONS"]["ALARM_PERIOD_MINS"]);
             CALL_ACTION_DELAY_SECS = int.Parse(data["DURATIONS"]["CALL_ACTION_DELAY_SECS"]);
             BEEP_COUNTDOWN_SECS = int.Parse(data["DURATIONS"]["BEEP_COUNTDOWN_SECS"]);
+            CALL_2ND_SECS = int.Parse(data["DURATIONS"]["2ND_CALL_DELAY_SECS"]);
 
             ALARM_TEXT_DEFAULT = data["TEXTS"]["ALARM_TEXT_DEFAULT"];
             ALARM_TEXT_COUNTDOWN = data["TEXTS"]["ALARM_TEXT_COUNTDOWN"];
             ALARM_TEXT_CALL = data["TEXTS"]["ALARM_TEXT_CALL"];
 
             ALARM_ACTION_EXE = data["ACTION"]["ALARM_ACTION_EXE"];
-            ALARM_ACTION_PARAMS = data["ACTION"]["ALARM_ACTION_PARAMS"];
+            ALARM_ACTION_PARAMS = data["ACTION"]["2ND_CALL_DELAY_SECS"];
         }
     }
 
@@ -92,8 +94,10 @@ namespace P_Alarm
         const int COUNTDOWN = 1;
         const int COUNTDOWN_BEEP = 2;
         const int ACTION = 3;
-        const int END = 4;
-        const int STOPPED = 5;
+        const int WAIT2 = 4;
+        const int ACTION2 = 5;
+        const int END = 6;
+        const int STOPPED = 7;
 
         private Settings settings;
         private bool firstTime;
@@ -162,9 +166,9 @@ namespace P_Alarm
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message 
-                    + ":\n" + 
-                    Settings.Instance().ALARM_ACTION_EXE + Settings.Instance().ALARM_ACTION_PARAMS, 
+                MessageBox.Show(e.Message
+                    + ":\n" +
+                    Settings.Instance().ALARM_ACTION_EXE + Settings.Instance().ALARM_ACTION_PARAMS,
                     "Error", MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 Application.Current.Shutdown();
             }
@@ -198,7 +202,30 @@ namespace P_Alarm
             }
             else if (state == ACTION)
             {
-                Trace.WriteLine("alarmAction");
+                Trace.WriteLine("alarmAction ACTION");
+                UpdateTextHandler(settings.ALARM_TEXT_CALL);
+                callScript();
+                cntdCounter = settings.CALL_2ND_SECS;
+                state = WAIT2;
+            }
+            else if (state == WAIT2)
+            {
+                string info = Regex.Replace(settings.ALARM_TEXT_COUNTDOWN, "\\$", cntdCounter.ToString());
+                UpdateTextHandler(info);
+                Trace.WriteLine("alarmAction COUNTDOWN2=" + info);
+                cntdCounter--;
+                if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
+                {
+                    doBeep();
+                }
+                if (cntdCounter <= 0)
+                {
+                    state = ACTION2;
+                }
+            }
+            else if (state == ACTION2)
+            {
+                Trace.WriteLine("alarmAction ACTION2");
                 UpdateTextHandler(settings.ALARM_TEXT_CALL);
                 callScript();
                 state = END;
