@@ -287,7 +287,7 @@ namespace P_Alarm
         {
             ResetTimer(AlarmTimer);
             alarmAction.Stop();
-            this.Hide();
+            WindowState = WindowState.Minimized;
             Trace.WriteLine("Alarm has been snoozed");
         }
 
@@ -300,7 +300,7 @@ namespace P_Alarm
         {
             InfoLbl.Content = Settings.Instance().ALARM_TEXT_DEFAULT;
             alarmAction.Start();
-            this.Show();
+            WindowState = WindowState.Normal;
         }
 
         void UpdateInfoLabel(string caption)
