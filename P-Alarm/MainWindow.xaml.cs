@@ -176,6 +176,11 @@ namespace P_Alarm
             Trace.WriteLine("callScript END");
         }
 
+        private string getCountdownStr(int countdownValue)
+        {
+            return Regex.Replace(settings.ALARM_TEXT_COUNTDOWN, "\\$", countdownValue.ToString());
+        }
+
 
         public void Action(object sender, EventArgs e)
         {
@@ -187,9 +192,8 @@ namespace P_Alarm
             }
             else if (state == COUNTDOWN || state == COUNTDOWN_BEEP)
             {
-                string info = Regex.Replace(settings.ALARM_TEXT_COUNTDOWN, "\\$", cntdCounter.ToString());
-                UpdateTextHandler(info);
-                Trace.WriteLine("alarmAction COUNTDOWN=" + info);
+                UpdateTextHandler(getCountdownStr(cntdCounter));
+                Trace.WriteLine("alarmAction COUNTDOWN=" + getCountdownStr(cntdCounter));
                 cntdCounter--;
                 if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
                 {
@@ -210,9 +214,8 @@ namespace P_Alarm
             }
             else if (state == WAIT2)
             {
-                string info = Regex.Replace(settings.ALARM_TEXT_COUNTDOWN, "\\$", cntdCounter.ToString());
-                UpdateTextHandler(info);
-                Trace.WriteLine("alarmAction COUNTDOWN2=" + info);
+                UpdateTextHandler(getCountdownStr(cntdCounter));
+                Trace.WriteLine("alarmAction COUNTDOWN2=" + getCountdownStr(cntdCounter));
                 cntdCounter--;
                 if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
                 {
