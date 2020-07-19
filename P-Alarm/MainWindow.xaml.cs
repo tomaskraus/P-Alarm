@@ -309,5 +309,13 @@ namespace P_Alarm
         {
             InfoLbl.Content = caption;
         }
+
+
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            Trace.WriteLine("on activated");
+            UpdateInfoLabel(Settings.Instance().ALARM_TEXT_DEFAULT);
+        }
     }
 }
