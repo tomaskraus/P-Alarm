@@ -258,10 +258,6 @@ namespace P_Alarm
             try
             {
                 alarmAction = new AlarmAction(Settings.Instance(), UpdateInfoLabel);
-
-                AlarmTimer = Utils.CreateTimer(Settings.Instance().ALARM_PERIOD_SECS, DoAlarmShow);
-                AlarmTimer.Start();
-
                 ShowAlarmWindow();
             }
             catch (Exception e)
@@ -270,6 +266,12 @@ namespace P_Alarm
                     "Error", MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 Application.Current.Shutdown();
             }
+        }
+
+        public void startAlarmLoop()
+        {
+            AlarmTimer = Utils.CreateTimer(Settings.Instance().ALARM_PERIOD_SECS, DoAlarmShow);
+            AlarmTimer.Start();
         }
 
         public static void ResetTimer(DispatcherTimer timer)
@@ -291,7 +293,7 @@ namespace P_Alarm
             StartAlarmWindow();
         }
 
-        void StartAlarmWindow()
+        public void StartAlarmWindow()
         {
             ShowAlarmWindow();
             alarmAction.Start();

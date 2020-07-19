@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -16,9 +17,16 @@ namespace P_Alarm
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             MainWindow wnd = new MainWindow();
-            //if (e.Args.Length == 1)
-            //    MessageBox.Show("Now opening file: \n\n" + e.Args[0]);
+            wnd.startAlarmLoop();
             wnd.Show();
+            {
+                if (e.Args[0] == "-t")
+                {
+                    //test
+                    Trace.WriteLine("  --- test");
+                    wnd.StartAlarmWindow();
+                }                    
+            }
         }
     }
 }
