@@ -272,6 +272,7 @@ namespace P_Alarm
         {
             AlarmTimer = Utils.CreateTimer(Settings.Instance().ALARM_PERIOD_SECS, DoAlarmShow);
             AlarmTimer.Start();
+            Trace.WriteLine("- - - Start Alarm Loop. Period: " + Settings.Instance().ALARM_PERIOD_SECS / 60 + " minute(s)");
         }
 
         public static void ResetTimer(DispatcherTimer timer)
