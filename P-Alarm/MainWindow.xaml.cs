@@ -100,7 +100,6 @@ namespace P_Alarm
         const int STOPPED = 7;
 
         private Settings settings;
-        private bool firstTime;
         private DispatcherTimer timer;
         private int cntdCounter;
         private int state;
@@ -110,19 +109,12 @@ namespace P_Alarm
         {
             this.settings = settings;
             this.UpdateTextHandler = updateTextHandler;
-            firstTime = true;
             timer = Utils.CreateTimer(1, Action);
             Trace.WriteLine("alarmAction create");
         }
 
         public void Start()
         {
-            if (firstTime == true)
-            {
-                firstTime = false;
-                Trace.WriteLine("alarmAction first time - return");
-                return;
-            }
             state = INIT;
             timer.Start();
             Trace.WriteLine("action start");
@@ -265,12 +257,12 @@ namespace P_Alarm
 
             try
             {
+                alarmAction = new AlarmAction(Settings.Instance(), UpdateInfoLabel);
+
                 AlarmTimer = Utils.CreateTimer(Settings.Instance().ALARM_PERIOD_SECS, DoAlarmShow);
                 AlarmTimer.Start();
 
-                alarmAction = new AlarmAction(Settings.Instance(), UpdateInfoLabel);
-
-                ShowWindow();
+                ShowAlarmWindow();
             }
             catch (Exception e)
             {
@@ -296,13 +288,18 @@ namespace P_Alarm
 
         void DoAlarmShow(object sender, EventArgs e)
         {
-            ShowWindow();
+            StartAlarmWindow();
         }
 
-        void ShowWindow()
+        void StartAlarmWindow()
+        {
+            ShowAlarmWindow();
+            alarmAction.Start();
+        }
+
+        void ShowAlarmWindow()
         {
             InfoLbl.Content = Settings.Instance().ALARM_TEXT_DEFAULT;
-            alarmAction.Start();
             WindowState = WindowState.Normal;
         }
 
