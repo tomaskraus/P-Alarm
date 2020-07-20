@@ -1,0 +1,14 @@
+﻿<Window x:Class="P_Alarm.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:P_Alarm"
+        mc:Ignorable="d"
+        Title="P-Alarm" Height="282.66" Width="277.436" ResizeMode="CanMinimize" Topmost="True">
+    <Grid HorizontalAlignment="Left" Width="261">
+        <Button x:Name="StopBtn" Content="Odložit alarm" HorizontalAlignment="Left" Height="196" Margin="10,10,0,0" VerticalAlignment="Top" Width="241" FontSize="24" FontWeight="Bold" Click="StopBtn_Click"/>
+        <Label x:Name="InfoLbl" Content=" " HorizontalAlignment="Left" Margin="10,211,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.421,-0.16" Width="241"/>
+
+    </Grid>
+</Window>
