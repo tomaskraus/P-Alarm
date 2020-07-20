@@ -69,6 +69,11 @@ namespace P_Alarm
             return instance;
         }
 
+        private void SanitizeValues()
+        {
+            ALARM_PERIOD_SECS -= CALL_ACTION_DELAY_SECS;
+        }
+
         private Settings()
         {
             var Parser = new FileIniDataParser();
@@ -86,6 +91,8 @@ namespace P_Alarm
 
             ALARM_ACTION_EXE = data["ACTION"]["ALARM_ACTION_EXE"];
             ALARM_ACTION_PARAMS = data["ACTION"]["2ND_CALL_DELAY_SECS"];
+
+            SanitizeValues();
 
             Trace.WriteLine("Settings: CREATED");
         }
@@ -145,7 +152,6 @@ namespace P_Alarm
             Trace.WriteLine("callScript cmd = " + settings.ALARM_ACTION_EXE + " "
                 + settings.ALARM_ACTION_PARAMS);
 
-            int exitCode = 0;
             try
             {
                 ProcessStartInfo startInfo = new ProcessStartInfo(
