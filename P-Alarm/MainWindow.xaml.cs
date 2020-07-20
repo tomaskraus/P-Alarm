@@ -218,8 +218,14 @@ namespace P_Alarm
                 Trace.WriteLine("alarmAction ACTION");
                 UpdateTextHandler(settings.ALARM_TEXT_CALL);
                 callScript();
-                cntdCounter = settings.CALL_2ND_SECS;
-                state = WAIT2;
+                if (settings.CALL_2ND_SECS > 0)
+                {
+                    cntdCounter = settings.CALL_2ND_SECS;
+                    state = WAIT2;
+                } else
+                {
+                    state = END;
+                }
             }
             else if (state == WAIT2)
             {
