@@ -17,10 +17,9 @@ namespace P_Alarm
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             MainWindow wnd = new MainWindow();
-            wnd.startAlarmLoop();
             wnd.Show();
             {
-                if (e.Args[0] == "-t")
+                if (e.Args.Length == 1 && e.Args[0] == "-t")
                 {
                     //test
                     Trace.WriteLine("  --- test");
