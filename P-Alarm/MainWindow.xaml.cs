@@ -3,6 +3,7 @@ using IniParser.Model;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -85,6 +86,8 @@ namespace P_Alarm
 
             ALARM_ACTION_EXE = data["ACTION"]["ALARM_ACTION_EXE"];
             ALARM_ACTION_PARAMS = data["ACTION"]["2ND_CALL_DELAY_SECS"];
+
+            Trace.WriteLine("Settings: CREATED");
         }
     }
 
@@ -148,13 +151,21 @@ namespace P_Alarm
                 ProcessStartInfo startInfo = new ProcessStartInfo(
                     Settings.Instance().ALARM_ACTION_EXE, Settings.Instance().ALARM_ACTION_PARAMS
                     );
-                var proc = System.Diagnostics.Process.Start(startInfo);
-                //TODO improve task end handling
-                //exitCode = proc.ExitCode;
-                //if (exitCode != 0)
-                //{
-                //    throw new Exception("program exit with code: " + exitCode);
-                //}
+                startInfo.UseShellExecute = false;
+                startInfo.RedirectStandardOutput = true;
+
+                using (Process process = Process.Start(startInfo))
+                {
+                    //
+                    // Read in all the text from the process with the StreamReader.
+                    //
+                    using (StreamReader reader = process.StandardOutput)
+                    {
+                        string result = reader.ReadToEnd();
+                        Console.Write(result);
+                    }
+                }
+  
             }
             catch (Exception e)
             {
@@ -257,8 +268,9 @@ namespace P_Alarm
 
             try
             {
-                alarmAction = new AlarmAction(Settings.Instance(), UpdateInfoLabel);
                 ShowAlarmWindow();
+                alarmAction = new AlarmAction(Settings.Instance(), UpdateInfoLabel);
+                StartAlarmLoop();
             }
             catch (Exception e)
             {
@@ -268,7 +280,7 @@ namespace P_Alarm
             }
         }
 
-        public void startAlarmLoop()
+        void StartAlarmLoop()
         {
             AlarmTimer = Utils.CreateTimer(Settings.Instance().ALARM_PERIOD_SECS, DoAlarmShow);
             AlarmTimer.Start();
@@ -315,8 +327,8 @@ namespace P_Alarm
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
-            Trace.WriteLine("on activated");
             UpdateInfoLabel(Settings.Instance().ALARM_TEXT_DEFAULT);
+            Trace.WriteLine("on activated");
         }
     }
 }
