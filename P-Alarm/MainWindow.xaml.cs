@@ -33,6 +33,21 @@ namespace P_Alarm
 
             return timer;
         }
+
+        public static string SecsToTimeStr(int secs)
+        {
+            if (secs < 0) {
+                return "";
+            }
+            return "" + ((int)(secs / 60))
+                + ":" 
+                + (
+                  (secs % 60 < 10)
+                    ? "0"
+                    : ""
+                )
+                + (secs % 60);
+        }
     }
 
 
@@ -69,10 +84,6 @@ namespace P_Alarm
             return instance;
         }
 
-        private void SanitizeValues()
-        {
-            ALARM_PERIOD_SECS -= CALL_ACTION_DELAY_SECS;
-        }
 
         private Settings()
         {
@@ -92,63 +103,77 @@ namespace P_Alarm
             ALARM_ACTION_EXE = data["ACTION"]["ALARM_ACTION_EXE"];
             ALARM_ACTION_PARAMS = data["ACTION"]["2ND_CALL_DELAY_SECS"];
 
-            SanitizeValues();
-
             Trace.WriteLine("Settings: CREATED");
         }
     }
 
+
+    public interface IAlarmControl
+    {
+        void SetStatusText(string text);
+        void SetCountDownValue(int secsRemaining);
+        //void CallAction();
+        void ShowAlarmWindow();
+    }
+
+
     public class AlarmAction
     {
-        const int INIT = 0;
-        const int COUNTDOWN = 1;
-        const int COUNTDOWN_BEEP = 2;
-        const int ACTION = 3;
-        const int WAIT2 = 4;
-        const int ACTION2 = 5;
-        const int END = 6;
-        const int STOPPED = 7;
+        const int UNDEF = 0;   //for next state consumed
+        const int START = 1;
+        const int RUN = 2;
+        const int COUNTDOWN = 3;
+        const int COUNTDOWN_BEEP = 4;
+        const int ACTION = 5;
+        const int WAIT2 = 6;
+        const int ACTION2 = 7;
 
         private Settings settings;
-        private DispatcherTimer timer;
+
         private int cntdCounter;
         private int state;
-        private readonly Action<string> UpdateTextHandler;
+        private int nextState;  //to deal with concurrent issues
+        private string textToShow;
+        private readonly IAlarmControl AlarmCtl;
 
-        public AlarmAction(Settings settings, Action<string> updateTextHandler)
+        private void SetNextState(int next)
+        {
+            nextState = next;
+            Trace.WriteLine("alarmAction nextState=" + next);
+        }
+
+
+        public AlarmAction(Settings settings, IAlarmControl alarmCtl)
         {
             this.settings = settings;
-            this.UpdateTextHandler = updateTextHandler;
-            timer = Utils.CreateTimer(1, Action);
+            AlarmCtl = alarmCtl;
+            Start();
             Trace.WriteLine("alarmAction create");
         }
 
         public void Start()
         {
-            state = INIT;
-            timer.Start();
-            Trace.WriteLine("action start");
+            SetNextState(START);
         }
 
-        public void Stop()
+        public void Reset()
         {
-            state = STOPPED;
-            Trace.WriteLine("action stop");
+            SetNextState(START);
         }
 
-        private void doBeep()
+        private void DoBeep()
         {
             Console.Beep(Settings.BEEP_PITCH, Settings.BEEP_DURATION_MS);
         }
 
-        private void doBeepLong()
+        private void DoBeepLong()
         {
             Console.Beep(Settings.BEEP_PITCH, Settings.BEEP_DURATION_LONG_MS);
         }
 
         private void callScript()
         {
-            doBeepLong();
+            DoBeepLong();
             Trace.WriteLine("callScript cmd = " + settings.ALARM_ACTION_EXE + " "
                 + settings.ALARM_ACTION_PARAMS);
 
@@ -190,23 +215,39 @@ namespace P_Alarm
             return Regex.Replace(settings.ALARM_TEXT_COUNTDOWN, "\\$", countdownValue.ToString());
         }
 
-
         public void Action(object sender, EventArgs e)
         {
-            if (state == INIT)
+            if (nextState != UNDEF)
             {
-                Trace.WriteLine("alarmAction INIT");
-                cntdCounter = settings.CALL_ACTION_DELAY_SECS;
-                state = COUNTDOWN;
+                //consume next state
+                state = nextState;
+                Trace.WriteLine("Action State was set to " + state);
+                nextState = UNDEF;
+            }
+            
+
+            if (state == START)
+            {
+                Trace.WriteLine("alarmAction START");
+                textToShow = settings.ALARM_TEXT_DEFAULT;
+                cntdCounter = settings.ALARM_PERIOD_SECS;
+                state = RUN;
+            }
+            else if (state == RUN)
+            {
+                if (cntdCounter <= settings.CALL_ACTION_DELAY_SECS)
+                {
+                    state = COUNTDOWN;
+                    AlarmCtl.ShowAlarmWindow();
+                }
             }
             else if (state == COUNTDOWN || state == COUNTDOWN_BEEP)
             {
-                UpdateTextHandler(getCountdownStr(cntdCounter));
-                Trace.WriteLine("alarmAction COUNTDOWN=" + getCountdownStr(cntdCounter));
-                cntdCounter--;
+                Trace.WriteLine("alarmAction COUNTDOWN=" + textToShow);
+                textToShow = getCountdownStr(cntdCounter);
                 if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
                 {
-                    doBeep();
+                    DoBeep();
                 }
                 if (cntdCounter <= 0)
                 {
@@ -216,7 +257,7 @@ namespace P_Alarm
             else if (state == ACTION)
             {
                 Trace.WriteLine("alarmAction ACTION");
-                UpdateTextHandler(settings.ALARM_TEXT_CALL);
+                textToShow = settings.ALARM_TEXT_CALL;
                 callScript();
                 if (settings.CALL_2ND_SECS > 0)
                 {
@@ -224,17 +265,16 @@ namespace P_Alarm
                     state = WAIT2;
                 } else
                 {
-                    state = END;
+                    state = START;
                 }
             }
             else if (state == WAIT2)
             {
-                UpdateTextHandler(getCountdownStr(cntdCounter));
+                textToShow = getCountdownStr(cntdCounter);
                 Trace.WriteLine("alarmAction COUNTDOWN2=" + getCountdownStr(cntdCounter));
-                cntdCounter--;
                 if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
                 {
-                    doBeep();
+                    DoBeep();
                 }
                 if (cntdCounter <= 0)
                 {
@@ -244,32 +284,25 @@ namespace P_Alarm
             else if (state == ACTION2)
             {
                 Trace.WriteLine("alarmAction ACTION2");
-                UpdateTextHandler(settings.ALARM_TEXT_CALL);
+                textToShow = settings.ALARM_TEXT_CALL;
                 callScript();
-                state = END;
-            }
-            else if (state == END)
-            {
-                timer.Stop();
-                Trace.WriteLine("alarmAction END");
-            }
-            else if (state == STOPPED)
-            {
-                timer.Stop();
-                Trace.WriteLine("alarmAction STOPPED");
+                state = START;
             }
             else
             {
                 throw new Exception("illegal AlarmAction state: " + state);
             }
 
+            AlarmCtl.SetStatusText(textToShow);
+            AlarmCtl.SetCountDownValue(cntdCounter);
+            cntdCounter--;
         }
     }
 
     /// <summary>
     /// Interakční logika pro MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, IAlarmControl
     {
         private DispatcherTimer AlarmTimer;
         private AlarmAction alarmAction;
@@ -280,8 +313,7 @@ namespace P_Alarm
 
             try
             {
-                ShowAlarmWindow();
-                alarmAction = new AlarmAction(Settings.Instance(), UpdateInfoLabel);
+                ShowAlarmWindow();               
                 StartAlarmLoop();
             }
             catch (Exception e)
@@ -294,53 +326,48 @@ namespace P_Alarm
 
         void StartAlarmLoop()
         {
-            AlarmTimer = Utils.CreateTimer(Settings.Instance().ALARM_PERIOD_SECS, DoAlarmShow);
+            alarmAction = new AlarmAction(Settings.Instance(), this);
+            AlarmTimer = Utils.CreateTimer(1, alarmAction.Action);
             AlarmTimer.Start();
             Trace.WriteLine("- - - Start Alarm Loop. Period: " + Settings.Instance().ALARM_PERIOD_SECS / 60 + " minute(s)");
         }
 
-        public static void ResetTimer(DispatcherTimer timer)
-        {
-            timer.Stop();
-            timer.Start();
-        }
+        
 
         private void StopBtn_Click(object sender, RoutedEventArgs e)
         {
-            ResetTimer(AlarmTimer);
-            alarmAction.Stop();
+            
+            alarmAction.Reset();
             WindowState = WindowState.Minimized;
             Trace.WriteLine("Alarm has been snoozed");
-        }
-
-        void DoAlarmShow(object sender, EventArgs e)
-        {
-            StartAlarmWindow();
-        }
-
-        public void StartAlarmWindow()
-        {
-            ShowAlarmWindow();
-            alarmAction.Start();
-        }
-
-        void ShowAlarmWindow()
-        {
-            InfoLbl.Content = Settings.Instance().ALARM_TEXT_DEFAULT;
-            WindowState = WindowState.Normal;
-        }
-
-        void UpdateInfoLabel(string caption)
-        {
-            InfoLbl.Content = caption;
         }
 
 
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
-            UpdateInfoLabel(Settings.Instance().ALARM_TEXT_DEFAULT);
+            SetStatusText(Settings.Instance().ALARM_TEXT_DEFAULT);
             Trace.WriteLine("on activated");
         }
+
+        public void SetStatusText(string text)
+        {
+            InfoLbl.Content = text;
+        }
+
+        public void SetCountDownValue(int secsRemaining)
+        {
+            CountdownLbl.Content = Utils.SecsToTimeStr(secsRemaining);
+        }
+
+        public void ShowAlarmWindow()
+        {
+            WindowState = WindowState.Normal;
+        }
+
+        //public void CallAction()
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }
