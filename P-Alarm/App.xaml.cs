@@ -18,13 +18,6 @@ namespace P_Alarm
         {
             MainWindow wnd = new MainWindow();
             wnd.Show();
-            {
-                if (e.Args.Length == 1 && e.Args[0] == "-t")
-                {
-                    //test
-                    Trace.WriteLine("  --- test");
-                }                    
-            }
         }
     }
 }
