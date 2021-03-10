@@ -134,10 +134,9 @@ namespace P_Alarm
         const int RUN = 2;
         const int NOT_STOPPED = 3;
         const int COUNTDOWN = 4;
-        const int COUNTDOWN_BEEP = 5;
-        const int ACTION = 6;
-        const int WAIT2 = 7;
-        const int ACTION2 = 8;
+        const int ACTION = 5;
+        const int WAIT2 = 6;
+        const int ACTION2 = 7;
 
         private Settings settings;
 
@@ -228,6 +227,20 @@ namespace P_Alarm
         }
 
 
+        private void CountdownLogic(int StateAfterCountdown)
+        {
+            textToShow = getCountdownStr(cntdCounter);
+            if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
+            {
+                DoBeep();
+            }
+            if (cntdCounter <= 0)
+            {
+                state = StateAfterCountdown;
+            }
+        }
+        
+
         public void Action(object sender, EventArgs e)
         {
             if (nextState != UNDEF)
@@ -247,18 +260,9 @@ namespace P_Alarm
                 repeatCounter = settings.NOT_STOPPED_ALARM_PERIOD_REPEAT;
                 state = RUN;
             }
-            else if (state == COUNTDOWN || state == COUNTDOWN_BEEP)
+            else if (state == COUNTDOWN)
             {
-                Trace.WriteLine("alarmAction COUNTDOWN=" + textToShow);
-                textToShow = getCountdownStr(cntdCounter);
-                if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
-                {
-                    DoBeep();
-                }
-                if (cntdCounter <= 0)
-                {
-                    state = ACTION;
-                }
+                CountdownLogic(ACTION);
             }
             else if (state == ACTION)
             {
@@ -277,15 +281,7 @@ namespace P_Alarm
             else if (state == WAIT2)
             {
                 Trace.WriteLine("alarmAction COUNTDOWN2=" + getCountdownStr(cntdCounter));
-                textToShow = getCountdownStr(cntdCounter);
-                if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
-                {
-                    DoBeep();
-                }
-                if (cntdCounter <= 0)
-                {
-                    state = ACTION2;
-                }
+                CountdownLogic(ACTION2);
             }
             else if (state == ACTION2)
             {
