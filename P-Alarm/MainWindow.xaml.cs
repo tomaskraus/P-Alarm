@@ -66,7 +66,7 @@ namespace P_Alarm
 
         //how long to wait after the application called the action, without the stop button pressed
         public int NOT_STOPPED_ALARM_PERIOD_SECS;
-        //how many NOT_STOPPED_ALARM_PERION to wait before return to the ALARM_PERIOD_SECS
+        //how many NOT_STOPPED_ALARM_PERIOD to wait before return to the ALARM_PERIOD_SECS
         public int NOT_STOPPED_ALARM_PERIOD_REPEAT;       
 
         //how many seconds to beep before the application calls an action
