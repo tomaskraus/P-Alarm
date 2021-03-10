@@ -60,10 +60,16 @@ namespace P_Alarm
         //-----------------------------------
 
         public int ALARM_PERIOD_SECS;
+
         public int CALL_ACTION_DELAY_SECS;
         public int CALL_2ND_SECS;
 
-        //how many seconds to beep before application calls an action
+        //how long to wait after the application called the action, without the stop button pressed
+        public int NOT_STOPPED_ALARM_PERIOD_SECS;
+        //how many NOT_STOPPED_ALARM_PERION to wait before return to the ALARM_PERIOD_SECS
+        public int NOT_STOPPED_ALARM_PERIOD_REPEAT;       
+
+        //how many seconds to beep before the application calls an action
         public int BEEP_COUNTDOWN_SECS;
         public string ALARM_TEXT_DEFAULT;
         public string ALARM_TEXT_COUNTDOWN;
@@ -93,8 +99,12 @@ namespace P_Alarm
 
             ALARM_PERIOD_SECS = 60 * int.Parse(data["DURATIONS"]["ALARM_PERIOD_MINS"]);
             CALL_ACTION_DELAY_SECS = int.Parse(data["DURATIONS"]["CALL_ACTION_DELAY_SECS"]);
-            BEEP_COUNTDOWN_SECS = int.Parse(data["DURATIONS"]["BEEP_COUNTDOWN_SECS"]);
             CALL_2ND_SECS = int.Parse(data["DURATIONS"]["2ND_CALL_DELAY_SECS"]);
+
+            NOT_STOPPED_ALARM_PERIOD_SECS = 60 * int.Parse(data["DURATIONS"]["NOT_STOPPED_ALARM_PERIOD_MINS"]);
+            NOT_STOPPED_ALARM_PERIOD_REPEAT = int.Parse(data["DURATIONS"]["NOT_STOPPED_ALARM_PERIOD_REPEAT"]);
+
+            BEEP_COUNTDOWN_SECS = int.Parse(data["DURATIONS"]["BEEP_COUNTDOWN_SECS"]);
 
             ALARM_TEXT_DEFAULT = data["TEXTS"]["ALARM_TEXT_DEFAULT"];
             ALARM_TEXT_COUNTDOWN = data["TEXTS"]["ALARM_TEXT_COUNTDOWN"];
