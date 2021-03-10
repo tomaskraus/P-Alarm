@@ -299,6 +299,7 @@ namespace P_Alarm
                 } else
                 {
                     cntdCounter = settings.NOT_STOPPED_ALARM_PERIOD_SECS;
+                    textToShow = settings.ALARM_TEXT_DEFAULT;
                     state = RUN;
                 }
             }
