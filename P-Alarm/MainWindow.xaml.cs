@@ -60,10 +60,16 @@ namespace P_Alarm
         //-----------------------------------
 
         public int ALARM_PERIOD_SECS;
+
         public int CALL_ACTION_DELAY_SECS;
         public int CALL_2ND_SECS;
 
-        //how many seconds to beep before application calls an action
+        //how long to wait after the application called the action, without the stop button pressed
+        public int NOT_STOPPED_ALARM_PERIOD_SECS;
+        //how many NOT_STOPPED_ALARM_PERION to wait before return to the ALARM_PERIOD_SECS
+        public int NOT_STOPPED_ALARM_PERIOD_REPEAT;       
+
+        //how many seconds to beep before the application calls an action
         public int BEEP_COUNTDOWN_SECS;
         public string ALARM_TEXT_DEFAULT;
         public string ALARM_TEXT_COUNTDOWN;
@@ -93,8 +99,12 @@ namespace P_Alarm
 
             ALARM_PERIOD_SECS = 60 * int.Parse(data["DURATIONS"]["ALARM_PERIOD_MINS"]);
             CALL_ACTION_DELAY_SECS = int.Parse(data["DURATIONS"]["CALL_ACTION_DELAY_SECS"]);
-            BEEP_COUNTDOWN_SECS = int.Parse(data["DURATIONS"]["BEEP_COUNTDOWN_SECS"]);
             CALL_2ND_SECS = int.Parse(data["DURATIONS"]["2ND_CALL_DELAY_SECS"]);
+
+            NOT_STOPPED_ALARM_PERIOD_SECS = 60 * int.Parse(data["DURATIONS"]["NOT_STOPPED_ALARM_PERIOD_MINS"]);
+            NOT_STOPPED_ALARM_PERIOD_REPEAT = int.Parse(data["DURATIONS"]["NOT_STOPPED_ALARM_PERIOD_REPEAT"]);
+
+            BEEP_COUNTDOWN_SECS = int.Parse(data["DURATIONS"]["BEEP_COUNTDOWN_SECS"]);
 
             ALARM_TEXT_DEFAULT = data["TEXTS"]["ALARM_TEXT_DEFAULT"];
             ALARM_TEXT_COUNTDOWN = data["TEXTS"]["ALARM_TEXT_COUNTDOWN"];
@@ -122,8 +132,8 @@ namespace P_Alarm
         const int UNDEF = 0;   //for next state consumed
         const int START = 1;
         const int RUN = 2;
-        const int COUNTDOWN = 3;
-        const int COUNTDOWN_BEEP = 4;
+        const int NOT_STOPPED = 3;
+        const int COUNTDOWN = 4;
         const int ACTION = 5;
         const int WAIT2 = 6;
         const int ACTION2 = 7;
@@ -131,6 +141,7 @@ namespace P_Alarm
         private Settings settings;
 
         private int cntdCounter;
+        private int repeatCounter;
         private int state;
         private int nextState;  //to deal with concurrent issues
         private string textToShow;
@@ -215,6 +226,21 @@ namespace P_Alarm
             return Regex.Replace(settings.ALARM_TEXT_COUNTDOWN, "\\$", countdownValue.ToString());
         }
 
+
+        private void CountdownLogic(int StateAfterCountdown)
+        {
+            textToShow = getCountdownStr(cntdCounter);
+            if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
+            {
+                DoBeep();
+            }
+            if (cntdCounter <= 0)
+            {
+                state = StateAfterCountdown;
+            }
+        }
+        
+
         public void Action(object sender, EventArgs e)
         {
             if (nextState != UNDEF)
@@ -231,28 +257,12 @@ namespace P_Alarm
                 Trace.WriteLine("alarmAction START");
                 textToShow = settings.ALARM_TEXT_DEFAULT;
                 cntdCounter = settings.ALARM_PERIOD_SECS;
+                repeatCounter = settings.NOT_STOPPED_ALARM_PERIOD_REPEAT;
                 state = RUN;
             }
-            else if (state == RUN)
+            else if (state == COUNTDOWN)
             {
-                if (cntdCounter <= settings.CALL_ACTION_DELAY_SECS)
-                {
-                    state = COUNTDOWN;
-                    AlarmCtl.ShowAlarmWindow();
-                }
-            }
-            else if (state == COUNTDOWN || state == COUNTDOWN_BEEP)
-            {
-                Trace.WriteLine("alarmAction COUNTDOWN=" + textToShow);
-                textToShow = getCountdownStr(cntdCounter);
-                if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
-                {
-                    DoBeep();
-                }
-                if (cntdCounter <= 0)
-                {
-                    state = ACTION;
-                }
+                CountdownLogic(ACTION);
             }
             else if (state == ACTION)
             {
@@ -265,28 +275,41 @@ namespace P_Alarm
                     state = WAIT2;
                 } else
                 {
-                    state = START;
+                    state = NOT_STOPPED;
                 }
             }
             else if (state == WAIT2)
             {
-                textToShow = getCountdownStr(cntdCounter);
                 Trace.WriteLine("alarmAction COUNTDOWN2=" + getCountdownStr(cntdCounter));
-                if (cntdCounter < Settings.Instance().BEEP_COUNTDOWN_SECS)
-                {
-                    DoBeep();
-                }
-                if (cntdCounter <= 0)
-                {
-                    state = ACTION2;
-                }
+                CountdownLogic(ACTION2);
             }
             else if (state == ACTION2)
             {
                 Trace.WriteLine("alarmAction ACTION2");
                 textToShow = settings.ALARM_TEXT_CALL;
                 callScript();
-                state = START;
+                state = NOT_STOPPED;
+            }
+            else if (state == NOT_STOPPED)
+            {
+                repeatCounter--;
+                Trace.WriteLine("alarmAction NOT_STOPPED. repeatCounter=" + repeatCounter);
+                if (repeatCounter < 0)
+                {
+                    state = START;
+                } else
+                {
+                    cntdCounter = settings.NOT_STOPPED_ALARM_PERIOD_SECS;
+                    state = RUN;
+                }
+            }
+            else if (state == RUN)
+            {
+                if (cntdCounter <= settings.CALL_ACTION_DELAY_SECS)
+                {
+                    state = COUNTDOWN;
+                    AlarmCtl.ShowAlarmWindow();
+                }
             }
             else
             {
@@ -296,6 +319,11 @@ namespace P_Alarm
             AlarmCtl.SetStatusText(textToShow);
             AlarmCtl.SetCountDownValue(cntdCounter);
             cntdCounter--;
+        }
+
+        public void SpeedUpAction()
+        {
+            cntdCounter = settings.CALL_ACTION_DELAY_SECS + 3;
         }
     }
 
@@ -342,6 +370,10 @@ namespace P_Alarm
             Trace.WriteLine("Alarm has been snoozed");
         }
 
+        private void SpeedupBtn_Click(object sender, RoutedEventArgs e)
+        {
+            alarmAction.SpeedUpAction();
+        }
 
         protected override void OnActivated(EventArgs e)
         {
@@ -364,6 +396,7 @@ namespace P_Alarm
         {
             WindowState = WindowState.Normal;
         }
+
 
         //public void CallAction()
         //{
