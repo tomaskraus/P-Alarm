@@ -23,7 +23,6 @@ namespace P_Alarm
                 {
                     //test
                     Trace.WriteLine("  --- test");
-                    wnd.StartAlarmWindow();
                 }                    
             }
         }

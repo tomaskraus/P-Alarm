@@ -5,10 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:P_Alarm"
         mc:Ignorable="d"
-        Title="P-Alarm" Height="282.66" Width="277.436" ResizeMode="CanMinimize" Topmost="True">
+        Title="P-Alarm" Height="329.66" Width="277.436" ResizeMode="CanMinimize" Topmost="True">
     <Grid HorizontalAlignment="Left" Width="261">
-        <Button x:Name="StopBtn" Content="Odložit alarm" HorizontalAlignment="Left" Height="196" Margin="10,10,0,0" VerticalAlignment="Top" Width="241" FontSize="24" FontWeight="Bold" Click="StopBtn_Click"/>
-        <Label x:Name="InfoLbl" Content=" " HorizontalAlignment="Left" Margin="10,211,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.421,-0.16" Width="241"/>
+        <Button x:Name="StopBtn" Content="Odložit alarm" HorizontalAlignment="Left" Height="196" Margin="10,52,0,0" VerticalAlignment="Top" Width="241" FontSize="24" FontWeight="Bold" Click="StopBtn_Click"/>
+        <Label x:Name="InfoLbl" Content=" " HorizontalAlignment="Left" Margin="10,253,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.421,-0.16" Width="211"/>
+        <Label x:Name="CountdownLbl" Content="" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="200" Height="37" FontSize="24" RenderTransformOrigin="0.498,0.486"/>
+        <Button x:Name="SpeedupBtn" Content="S" HorizontalAlignment="Left" Height="17" Margin="229,262,0,0" VerticalAlignment="Top" Width="22" Click="SpeedupBtn_Click" RenderTransformOrigin="0.409,12.524" FontSize="10"/>
 
     </Grid>
 </Window>
