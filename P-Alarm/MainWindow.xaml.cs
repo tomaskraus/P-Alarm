@@ -280,7 +280,6 @@ namespace P_Alarm
             }
             else if (state == WAIT2)
             {
-                Trace.WriteLine("alarmAction COUNTDOWN2=" + getCountdownStr(cntdCounter));
                 CountdownLogic(ACTION2);
             }
             else if (state == ACTION2)
