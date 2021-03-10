@@ -9,8 +9,8 @@
     <Grid HorizontalAlignment="Left" Width="261">
         <Button x:Name="StopBtn" Content="Odložit alarm" HorizontalAlignment="Left" Height="196" Margin="10,52,0,0" VerticalAlignment="Top" Width="241" FontSize="24" FontWeight="Bold" Click="StopBtn_Click"/>
         <Label x:Name="InfoLbl" Content=" " HorizontalAlignment="Left" Margin="10,253,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.421,-0.16" Width="211"/>
-        <Label x:Name="CountdownLbl" Content="" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="200" Height="37" FontWeight="Bold" FontSize="16" RenderTransformOrigin="0.498,0.486"/>
-        <Button x:Name="SpeedupBtn" Content="S" HorizontalAlignment="Left" Height="17" Margin="226,262,0,0" VerticalAlignment="Top" Width="22" Click="SpeedupBtn_Click" RenderTransformOrigin="0.409,12.524" FontSize="10"/>
+        <Label x:Name="CountdownLbl" Content="" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="200" Height="37" FontSize="24" RenderTransformOrigin="0.498,0.486"/>
+        <Button x:Name="SpeedupBtn" Content="S" HorizontalAlignment="Left" Height="17" Margin="229,262,0,0" VerticalAlignment="Top" Width="22" Click="SpeedupBtn_Click" RenderTransformOrigin="0.409,12.524" FontSize="10"/>
 
     </Grid>
 </Window>
